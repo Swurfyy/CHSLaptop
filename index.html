@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Campus Het Spoor - Uitleenservice</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --chs-green: #00762f;
+        --chs-green-dark: #005a23;
+        --chs-accent: #54aa26;
+        --chs-bg: #f4faf4;
+        --chs-text: #1c2630;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Roboto", Arial, sans-serif;
+        color: var(--chs-text);
+        background: linear-gradient(180deg, #ffffff 0%, var(--chs-bg) 100%);
+        min-height: 100vh;
+      }
+
+      .topbar {
+        background: var(--chs-green);
+        color: #ffffff;
+        padding: 14px 20px;
+        font-size: 0.9rem;
+        text-align: center;
+        letter-spacing: 0.01em;
+      }
+
+      .wrapper {
+        max-width: 860px;
+        margin: 40px auto;
+        padding: 0 20px;
+      }
+
+      .card {
+        background: #ffffff;
+        border-radius: 14px;
+        border: 1px solid #d9eadc;
+        box-shadow: 0 16px 36px rgba(0, 90, 35, 0.1);
+        overflow: hidden;
+      }
+
+      .card-header {
+        background: linear-gradient(120deg, var(--chs-green-dark), var(--chs-green));
+        color: #ffffff;
+        padding: 28px 28px 24px;
+      }
+
+      .school-name {
+        margin: 0;
+        font-size: clamp(1.4rem, 2.2vw, 2rem);
+        font-weight: 700;
+      }
+
+      .school-address {
+        margin: 10px 0 0;
+        font-weight: 500;
+        font-size: 0.98rem;
+        line-height: 1.5;
+        opacity: 0.95;
+      }
+
+      .card-body {
+        padding: 28px;
+      }
+
+      .intro {
+        margin: 0 0 24px;
+        font-size: 1rem;
+        line-height: 1.6;
+      }
+
+      form {
+        display: grid;
+        gap: 18px;
+      }
+
+      label {
+        font-weight: 600;
+        font-size: 0.95rem;
+        display: block;
+        margin-bottom: 7px;
+      }
+
+      input,
+      select {
+        width: 100%;
+        border: 1px solid #c7decc;
+        border-radius: 10px;
+        padding: 12px 14px;
+        font: inherit;
+        background: #ffffff;
+      }
+
+      input:focus,
+      select:focus {
+        outline: 3px solid #e2f2e3;
+        border-color: var(--chs-accent);
+      }
+
+      .submit-btn {
+        margin-top: 6px;
+        border: 0;
+        background: var(--chs-accent);
+        color: #ffffff;
+        padding: 13px 18px;
+        border-radius: 10px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: 0.2s ease;
+      }
+
+      .submit-btn:hover {
+        background: #3f8f1a;
+      }
+
+      .submit-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .status {
+        min-height: 24px;
+        margin: 6px 0 0;
+        font-weight: 600;
+      }
+
+      .status.success {
+        color: #1f7a3e;
+      }
+
+      .status.error {
+        color: #b42318;
+      }
+
+      .signature-wrap {
+        border: 1px solid #c7decc;
+        border-radius: 10px;
+        background: #ffffff;
+        overflow: hidden;
+      }
+
+      #signatureCanvas {
+        display: block;
+        width: 100%;
+        height: 220px;
+        touch-action: none;
+        cursor: crosshair;
+        background: linear-gradient(180deg, #ffffff, #f7fcf7);
+      }
+
+      .signature-actions {
+        display: flex;
+        justify-content: flex-end;
+        padding: 10px;
+        border-top: 1px solid #deebde;
+        background: #f6fbf6;
+      }
+
+      .clear-signature-btn {
+        border: 1px solid #c7decc;
+        background: #ffffff;
+        color: #1d5a2b;
+        border-radius: 8px;
+        padding: 8px 12px;
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .signature-hint {
+        margin: 8px 0 0;
+        font-size: 0.85rem;
+        color: #4f6351;
+      }
+
+      .footer {
+        text-align: center;
+        margin: 22px 0 8px;
+        font-size: 0.85rem;
+        color: #4f6351;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="topbar">Campus Het Spoor - Uitleenservice Leenlaptops</div>
+
+    <main class="wrapper">
+      <section class="card" aria-labelledby="page-title">
+        <header class="card-header">
+          <h1 id="page-title" class="school-name">Campus Het Spoor</h1>
+          <p class="school-address">
+            Begonialaan 34<br />
+            2400 Mol
+          </p>
+        </header>
+
+        <div class="card-body">
+          <p class="intro">
+            Bevestig hieronder welke laptop werd uitgedeeld en of het toestel bij ontvangst
+            werkend was. Alle velden zijn verplicht.
+          </p>
+
+          <form id="loanForm" novalidate>
+            <input type="hidden" name="_captcha" value="false" />
+            <input type="hidden" name="_template" value="table" />
+            <input type="hidden" id="subjectField" name="_subject" value="Leenlaptop - studentnaam" />
+
+            <div>
+              <label for="studentName">Naam van student</label>
+              <input id="studentName" name="Naam van student" type="text" required />
+            </div>
+
+            <div>
+              <label for="laptopNumber">Laptop-NR</label>
+              <input id="laptopNumber" name="Laptop-NR" type="text" required />
+            </div>
+
+            <div>
+              <label for="laptopOk">Laptop is in orde (Ja / Nee)</label>
+              <select id="laptopOk" name="Laptop is in orde" required>
+                <option value="" selected disabled>Kies Ja of Nee</option>
+                <option value="Ja">Ja</option>
+                <option value="Nee">Nee</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="signatureCanvas">Handtekening student</label>
+              <div class="signature-wrap">
+                <canvas id="signatureCanvas"></canvas>
+                <div class="signature-actions">
+                  <button class="clear-signature-btn" id="clearSignatureBtn" type="button">
+                    Handtekening wissen
+                  </button>
+                </div>
+              </div>
+              <p class="signature-hint">
+                Teken met vinger, stylus of muis. Handtekening is verplicht.
+              </p>
+              <input type="hidden" id="signatureData" name="Handtekening (base64 png)" />
+            </div>
+
+            <button class="submit-btn" type="submit">Bevestiging verzenden</button>
+            <p id="statusMessage" class="status" role="status" aria-live="polite"></p>
+          </form>
+        </div>
+      </section>
+
+      <p class="footer">Campus Het Spoor, Mol</p>
+    </main>
+
+    <script>
+      const form = document.getElementById("loanForm");
+      const studentNameInput = document.getElementById("studentName");
+      const subjectField = document.getElementById("subjectField");
+      const statusMessage = document.getElementById("statusMessage");
+      const submitButton = form.querySelector("button[type='submit']");
+      const signatureCanvas = document.getElementById("signatureCanvas");
+      const signatureDataField = document.getElementById("signatureData");
+      const clearSignatureBtn = document.getElementById("clearSignatureBtn");
+      const signatureCtx = signatureCanvas.getContext("2d");
+      let isDrawing = false;
+      let hasSignature = false;
+
+      function resizeSignatureCanvas() {
+        const ratio = Math.max(window.devicePixelRatio || 1, 1);
+        const width = signatureCanvas.clientWidth;
+        const height = signatureCanvas.clientHeight;
+        signatureCanvas.width = Math.floor(width * ratio);
+        signatureCanvas.height = Math.floor(height * ratio);
+        signatureCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+        signatureCtx.lineWidth = 2;
+        signatureCtx.lineJoin = "round";
+        signatureCtx.lineCap = "round";
+        signatureCtx.strokeStyle = "#00762f";
+      }
+
+      function clearSignature() {
+        signatureCtx.clearRect(0, 0, signatureCanvas.clientWidth, signatureCanvas.clientHeight);
+        signatureDataField.value = "";
+        hasSignature = false;
+      }
+
+      function pointerPosition(event) {
+        const rect = signatureCanvas.getBoundingClientRect();
+        return {
+          x: event.clientX - rect.left,
+          y: event.clientY - rect.top,
+        };
+      }
+
+      function startDrawing(event) {
+        event.preventDefault();
+        isDrawing = true;
+        const pos = pointerPosition(event);
+        signatureCtx.beginPath();
+        signatureCtx.moveTo(pos.x, pos.y);
+      }
+
+      function draw(event) {
+        if (!isDrawing) return;
+        event.preventDefault();
+        const pos = pointerPosition(event);
+        signatureCtx.lineTo(pos.x, pos.y);
+        signatureCtx.stroke();
+        hasSignature = true;
+      }
+
+      function stopDrawing(event) {
+        if (!isDrawing) return;
+        event.preventDefault();
+        isDrawing = false;
+      }
+
+      resizeSignatureCanvas();
+      window.addEventListener("resize", resizeSignatureCanvas);
+      clearSignatureBtn.addEventListener("click", clearSignature);
+      signatureCanvas.addEventListener("pointerdown", startDrawing);
+      signatureCanvas.addEventListener("pointermove", draw);
+      signatureCanvas.addEventListener("pointerup", stopDrawing);
+      signatureCanvas.addEventListener("pointerleave", stopDrawing);
+
+      if (window.location.protocol === "file:") {
+        statusMessage.className = "status error";
+        statusMessage.textContent =
+          "Lokaal openen via bestand (file://) werkt niet voor mail. Start een lokale webserver.";
+      }
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        if (!form.checkValidity()) {
+          form.reportValidity();
+          return;
+        }
+
+        if (!hasSignature) {
+          statusMessage.className = "status error";
+          statusMessage.textContent = "Handtekening is verplicht.";
+          return;
+        }
+
+        const studentName = studentNameInput.value.trim();
+        subjectField.value = `Leenlaptop - ${studentName}`;
+        signatureDataField.value = signatureCanvas.toDataURL("image/png");
+
+        submitButton.disabled = true;
+        statusMessage.className = "status";
+        statusMessage.textContent = "Verzenden...";
+
+        try {
+          const response = await fetch("https://formsubmit.co/ajax/zendejacobs1@gmail.com", {
+            method: "POST",
+            headers: { Accept: "application/json" },
+            body: new FormData(form),
+          });
+
+          const result = await response.json();
+
+          if (response.ok && result.success === "true") {
+            statusMessage.className = "status success";
+            statusMessage.textContent = "Bevestiging succesvol verzonden.";
+            form.reset();
+            clearSignature();
+          } else {
+            throw new Error(result.message || "Verzenden mislukt.");
+          }
+        } catch (error) {
+          statusMessage.className = "status error";
+          statusMessage.textContent = error.message || "Er liep iets mis bij het verzenden.";
+        } finally {
+          submitButton.disabled = false;
+          subjectField.value = "Leenlaptop - studentnaam";
+        }
+      });
+    </script>
+  </body>
+</html>
