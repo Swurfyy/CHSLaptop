@@ -513,7 +513,7 @@
               <p class="signature-hint">
                 Teken met vinger, stylus of muis. Handtekening is verplicht.
               </p>
-              <input type="hidden" id="signatureData" name="Handtekening (base64 png)" />
+              <input type="hidden" id="signatureData" name="Handtekening status" value="Bijlage toegevoegd" />
             </div>
 
             <button class="submit-btn" type="submit">Bevestiging verzenden</button>
@@ -660,6 +660,37 @@
         isDrawing = false;
       }
 
+      function getCompressedSignatureDataUrl() {
+        const sourceWidth = signatureCanvas.width;
+        const sourceHeight = signatureCanvas.height;
+        const maxWidth = 900;
+        const scale = Math.min(1, maxWidth / sourceWidth);
+        const targetWidth = Math.max(1, Math.floor(sourceWidth * scale));
+        const targetHeight = Math.max(1, Math.floor(sourceHeight * scale));
+
+        const exportCanvas = document.createElement("canvas");
+        exportCanvas.width = targetWidth;
+        exportCanvas.height = targetHeight;
+        const exportCtx = exportCanvas.getContext("2d");
+        exportCtx.fillStyle = "#ffffff";
+        exportCtx.fillRect(0, 0, targetWidth, targetHeight);
+        exportCtx.drawImage(signatureCanvas, 0, 0, targetWidth, targetHeight);
+
+        return exportCanvas.toDataURL("image/jpeg", 0.72);
+      }
+
+      function dataUrlToBlob(dataUrl) {
+        const [meta, base64] = dataUrl.split(",");
+        const mime = meta.match(/:(.*?);/)[1];
+        const binary = atob(base64);
+        const len = binary.length;
+        const bytes = new Uint8Array(len);
+        for (let i = 0; i < len; i += 1) {
+          bytes[i] = binary.charCodeAt(i);
+        }
+        return new Blob([bytes], { type: mime });
+      }
+
       initializeBrandAssets();
       resizeSignatureCanvas();
       window.addEventListener("resize", resizeSignatureCanvas);
@@ -685,28 +716,40 @@
 
         const studentName = studentNameInput.value.trim();
         subjectField.value = `Leenlaptop - ${studentName}`;
-        signatureDataField.value = signatureCanvas.toDataURL("image/png");
+        const compressedSignature = getCompressedSignatureDataUrl();
+        const signatureBlob = dataUrlToBlob(compressedSignature);
 
         submitButton.disabled = true;
         statusMessage.className = "status";
         statusMessage.textContent = "Verzenden...";
 
         try {
+          const formData = new FormData(form);
+          formData.set("Handtekening status", "Bijlage toegevoegd");
+          formData.append(
+            "Handtekening bestand",
+            signatureBlob,
+            `handtekening-${studentName.replace(/\s+/g, "-").toLowerCase() || "student"}.jpg`
+          );
+
           const response = await fetch("https://formsubmit.co/ajax/zendejacobs1@gmail.com", {
             method: "POST",
             headers: { Accept: "application/json" },
-            body: new FormData(form),
+            body: formData,
           });
 
           const result = await response.json();
 
-          if (response.ok && result.success === "true") {
+          if (response.ok && (result.success === "true" || result.success === true)) {
             statusMessage.className = "status success";
             statusMessage.textContent = "Bevestiging succesvol verzonden.";
             form.reset();
             clearSignature();
           } else {
-            throw new Error(result.message || "Verzenden mislukt.");
+            throw new Error(
+              result.message ||
+                "Server Error bij verzending. Probeer opnieuw of verklein de handtekening."
+            );
           }
         } catch (error) {
           statusMessage.className = "status error";
