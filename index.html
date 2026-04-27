@@ -4,19 +4,30 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Campus Het Spoor - Uitleenservice</title>
+    <link id="siteFavicon" rel="icon" type="image/png" href="./chslogo.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
       rel="stylesheet"
     />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+      integrity="sha512-SnH5WK+bZxgPHs44uWix+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkR4j8yYF0nLMwNLD69iCdYxf4xvWZoM4Y0g=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
     <style>
       :root {
         --chs-green: #00762f;
         --chs-green-dark: #005a23;
         --chs-accent: #54aa26;
-        --chs-bg: #f4faf4;
-        --chs-text: #1c2630;
+        --chs-bg: #f3f8f2;
+        --chs-surface: #ffffff;
+        --chs-text: #1e2d20;
+        --chs-muted: #59705b;
+        --chs-border: #d7e6d7;
       }
 
       * {
@@ -27,105 +38,188 @@
         margin: 0;
         font-family: "Roboto", Arial, sans-serif;
         color: var(--chs-text);
-        background: linear-gradient(180deg, #ffffff 0%, var(--chs-bg) 100%);
+        background: radial-gradient(circle at top right, #f8fcf7 0%, var(--chs-bg) 55%, #edf5ec 100%);
         min-height: 100vh;
       }
 
-      .topbar {
-        background: var(--chs-green);
-        color: #ffffff;
-        padding: 14px 20px;
+      .site-header {
+        border-bottom: 1px solid #d6e7d7;
+        background: #ffffff;
+      }
+
+      .header-inner {
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 12px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 18px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .brand-mark {
+        width: 48px;
+        height: 48px;
+        object-fit: contain;
+        flex-shrink: 0;
+      }
+
+      .brand-text {
+        margin: 0;
+        font-size: 1.12rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+        color: #163a1d;
+      }
+
+      .brand-subtext {
+        margin: 2px 0 0;
+        font-size: 0.8rem;
+        color: #6a7f6b;
+      }
+
+      .header-nav {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+      }
+
+      .header-nav a {
+        color: var(--chs-green);
+        text-decoration: none;
+        font-weight: 500;
         font-size: 0.9rem;
-        text-align: center;
-        letter-spacing: 0.01em;
+      }
+
+      .header-nav a:hover {
+        text-decoration: underline;
       }
 
       .wrapper {
-        max-width: 860px;
-        margin: 40px auto;
+        max-width: 980px;
+        margin: 42px auto;
         padding: 0 20px;
       }
 
-      .card {
-        background: #ffffff;
-        border-radius: 14px;
-        border: 1px solid #d9eadc;
-        box-shadow: 0 16px 36px rgba(0, 90, 35, 0.1);
-        overflow: hidden;
+      .layout {
+        display: grid;
+        gap: 22px;
+        grid-template-columns: 320px minmax(0, 1fr);
       }
 
-      .card-header {
-        background: linear-gradient(120deg, var(--chs-green-dark), var(--chs-green));
-        color: #ffffff;
-        padding: 28px 28px 24px;
+      .panel {
+        background: var(--chs-surface);
+        border-radius: 16px;
+        border: 1px solid var(--chs-border);
+        box-shadow: 0 16px 36px rgba(0, 48, 15, 0.08);
       }
 
-      .school-name {
+      .campus-panel {
+        padding: 22px;
+      }
+
+      .campus-title {
         margin: 0;
-        font-size: clamp(1.4rem, 2.2vw, 2rem);
+        font-size: 1.25rem;
         font-weight: 700;
+        color: #163a1d;
       }
 
-      .school-address {
-        margin: 10px 0 0;
+      .campus-address {
+        margin: 12px 0 0;
         font-weight: 500;
-        font-size: 0.98rem;
-        line-height: 1.5;
-        opacity: 0.95;
-      }
-
-      .card-body {
-        padding: 28px;
-      }
-
-      .intro {
-        margin: 0 0 24px;
-        font-size: 1rem;
+        color: #243827;
         line-height: 1.6;
       }
 
+      .info-chip {
+        margin-top: 16px;
+        font-size: 0.82rem;
+        color: #1f4d25;
+        background: #eef7ec;
+        border: 1px solid #d4e9d1;
+        border-radius: 999px;
+        padding: 8px 12px;
+        display: inline-flex;
+      }
+
+      .form-panel {
+        overflow: hidden;
+      }
+
+      .form-header {
+        padding: 24px 26px 18px;
+        border-bottom: 1px solid #e7efe6;
+        background: linear-gradient(180deg, #ffffff 0%, #fbfdfb 100%);
+      }
+
+      .form-title {
+        margin: 0;
+        font-size: 1.35rem;
+        color: #173c1e;
+      }
+
+      .intro {
+        margin: 8px 0 0;
+        color: var(--chs-muted);
+        line-height: 1.55;
+      }
+
       form {
+        padding: 22px 26px 26px;
         display: grid;
-        gap: 18px;
+        gap: 16px;
       }
 
       label {
         font-weight: 600;
-        font-size: 0.95rem;
+        font-size: 0.92rem;
         display: block;
-        margin-bottom: 7px;
+        margin-bottom: 8px;
+        color: #1f3b23;
       }
 
       input,
       select {
         width: 100%;
-        border: 1px solid #c7decc;
-        border-radius: 10px;
-        padding: 12px 14px;
+        border: 1px solid #c6dcc7;
+        border-radius: 11px;
+        padding: 12px 13px;
         font: inherit;
-        background: #ffffff;
+        background: #fcfefc;
       }
 
       input:focus,
       select:focus {
-        outline: 3px solid #e2f2e3;
-        border-color: var(--chs-accent);
+        outline: none;
+        border-color: #5aa238;
+        box-shadow: 0 0 0 3px #e4f2df;
       }
 
       .submit-btn {
-        margin-top: 6px;
+        margin-top: 10px;
         border: 0;
-        background: var(--chs-accent);
+        background: linear-gradient(180deg, #63b73a 0%, #4fa42a 100%);
         color: #ffffff;
-        padding: 13px 18px;
-        border-radius: 10px;
+        padding: 14px 18px;
+        border-radius: 11px;
         font-weight: 700;
+        letter-spacing: 0.01em;
         cursor: pointer;
-        transition: 0.2s ease;
+        transition: 0.2s ease all;
       }
 
       .submit-btn:hover {
-        background: #3f8f1a;
+        transform: translateY(-1px);
+        box-shadow: 0 8px 18px rgba(79, 164, 42, 0.28);
       }
 
       .submit-btn:disabled {
@@ -135,8 +229,9 @@
 
       .status {
         min-height: 24px;
-        margin: 6px 0 0;
+        margin: 4px 0 0;
         font-weight: 600;
+        font-size: 0.93rem;
       }
 
       .status.success {
@@ -148,33 +243,39 @@
       }
 
       .signature-wrap {
-        border: 1px solid #c7decc;
-        border-radius: 10px;
-        background: #ffffff;
+        border: 1px solid #c6dcc7;
+        border-radius: 11px;
+        background: #fcfefc;
         overflow: hidden;
       }
 
       #signatureCanvas {
         display: block;
         width: 100%;
-        height: 220px;
+        height: 210px;
         touch-action: none;
         cursor: crosshair;
-        background: linear-gradient(180deg, #ffffff, #f7fcf7);
+        background: repeating-linear-gradient(
+          to bottom,
+          #ffffff 0,
+          #ffffff 34px,
+          #f6fbf5 34px,
+          #f6fbf5 35px
+        );
       }
 
       .signature-actions {
         display: flex;
         justify-content: flex-end;
-        padding: 10px;
-        border-top: 1px solid #deebde;
-        background: #f6fbf6;
+        padding: 10px 10px 11px;
+        border-top: 1px solid #e2ece1;
+        background: #f7fbf6;
       }
 
       .clear-signature-btn {
-        border: 1px solid #c7decc;
+        border: 1px solid #bed4bf;
         background: #ffffff;
-        color: #1d5a2b;
+        color: #225e2f;
         border-radius: 8px;
         padding: 8px 12px;
         font: inherit;
@@ -185,35 +286,195 @@
       .signature-hint {
         margin: 8px 0 0;
         font-size: 0.85rem;
-        color: #4f6351;
+        color: #607162;
       }
 
       .footer {
-        text-align: center;
-        margin: 22px 0 8px;
-        font-size: 0.85rem;
-        color: #4f6351;
+        margin-top: 30px;
+        border-top: 1px solid #dbe9dc;
+        background: #ffffff;
+      }
+
+      .footer-inner {
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 26px 20px 16px;
+      }
+
+      .footer-grid {
+        display: grid;
+        grid-template-columns: 1.1fr 1fr 1fr;
+        gap: 20px;
+      }
+
+      .footer-title {
+        margin: 0 0 10px;
+        font-size: 0.95rem;
+        color: #163a1d;
+      }
+
+      .footer-copy {
+        margin: 0;
+        color: #384e3b;
+        line-height: 1.6;
+        font-size: 0.9rem;
+      }
+
+      .footer-links {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        display: grid;
+        gap: 6px;
+      }
+
+      .footer-links a {
+        color: var(--chs-green);
+        text-decoration: none;
+        font-size: 0.9rem;
+      }
+
+      .footer-links a:hover {
+        text-decoration: underline;
+      }
+
+      .social-row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+      }
+
+      .social-icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 999px;
+        border: 1px solid #cfe0d1;
+        background: #f5faf4;
+        color: #1a5325;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.88rem;
+        text-decoration: none;
+      }
+
+      .footer-bottom {
+        margin-top: 18px;
+        padding-top: 12px;
+        border-top: 1px solid #e4eee4;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        font-size: 0.82rem;
+        color: #6b7d6c;
+      }
+
+      .footer-bottom a {
+        color: #6b7d6c;
+        text-decoration: none;
+      }
+
+      @media (max-width: 860px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+
+        .wrapper {
+          margin-top: 26px;
+        }
+
+        .footer-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+
+      @media (max-width: 740px) {
+        .header-inner,
+        .wrapper,
+        .footer-inner {
+          padding-left: 14px;
+          padding-right: 14px;
+        }
+
+        .brand-mark {
+          width: 42px;
+          height: 42px;
+        }
+
+        .header-nav {
+          display: none;
+        }
+
+        form {
+          padding: 18px 16px 20px;
+        }
+
+        .form-header {
+          padding: 18px 16px 14px;
+        }
+
+        .footer-grid {
+          grid-template-columns: 1fr;
+          gap: 14px;
+        }
+
+        .footer-bottom {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+      }
+
+      @media (hover: none) and (pointer: coarse) {
+        input,
+        select,
+        .submit-btn,
+        .clear-signature-btn,
+        .social-icon {
+          min-height: 44px;
+        }
       }
     </style>
   </head>
   <body>
-    <div class="topbar">Campus Het Spoor - Uitleenservice Leenlaptops</div>
+    <header class="site-header">
+      <div class="header-inner">
+        <div class="brand">
+          <img class="brand-mark" id="brandLogo" src="./chslogo.png" alt="Campus Het Spoor logo" />
+          <div>
+            <p class="brand-text">Campus Het Spoor</p>
+            <p class="brand-subtext">Uitleenservice Leenlaptops</p>
+          </div>
+        </div>
+        <nav class="header-nav" aria-label="Hoofdmenu">
+          <a href="https://campushetspoor.be/" target="_blank" rel="noopener noreferrer">Home</a>
+          <a href="https://campushetspoor.be/campus-het-spoor-mol-info-inschrijvingen/" target="_blank" rel="noopener noreferrer">Info &amp; inschrijvingen</a>
+          <a href="https://campushetspoor.be/campus-het-spoor-mol-richtingen/" target="_blank" rel="noopener noreferrer">Richtingen</a>
+          <a href="https://campushetspoor.be/campus-het-spoor-mol-contact/" target="_blank" rel="noopener noreferrer">Contact</a>
+        </nav>
+      </div>
+    </header>
 
     <main class="wrapper">
-      <section class="card" aria-labelledby="page-title">
-        <header class="card-header">
-          <h1 id="page-title" class="school-name">Campus Het Spoor</h1>
-          <p class="school-address">
+      <div class="layout">
+        <aside class="panel campus-panel" aria-label="Campus gegevens">
+          <h1 id="page-title" class="campus-title">Campus Het Spoor</h1>
+          <p class="campus-address">
             Begonialaan 34<br />
             2400 Mol
           </p>
-        </header>
+          <span class="info-chip">Alle velden zijn verplicht</span>
+        </aside>
 
-        <div class="card-body">
-          <p class="intro">
-            Bevestig hieronder welke laptop werd uitgedeeld en of het toestel bij ontvangst
-            werkend was. Alle velden zijn verplicht.
-          </p>
+        <section class="panel form-panel" aria-labelledby="form-title">
+          <header class="form-header">
+            <h2 id="form-title" class="form-title">Bevestiging leenlaptop</h2>
+            <p class="intro">
+              Registreer hieronder de uitgedeelde laptop en bevestig de staat van het toestel
+              bij ontvangst.
+            </p>
+          </header>
 
           <form id="loanForm" novalidate>
             <input type="hidden" name="_captcha" value="false" />
@@ -258,14 +519,60 @@
             <button class="submit-btn" type="submit">Bevestiging verzenden</button>
             <p id="statusMessage" class="status" role="status" aria-live="polite"></p>
           </form>
-        </div>
-      </section>
+        </section>
+      </div>
 
-      <p class="footer">Campus Het Spoor, Mol</p>
     </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        <div class="footer-grid">
+          <section>
+            <h3 class="footer-title">Campus het Spoor Mol</h3>
+            <p class="footer-copy">
+              Begonialaan 34 - 2400 Mol (B)<br />
+              Telefoon: <strong>014 31 27 48</strong><br />
+              Bereikbaar van 7u45 tot 16u30. Woensdag tot 13u.
+            </p>
+          </section>
+
+          <section>
+            <h3 class="footer-title">Snelle links</h3>
+            <ul class="footer-links">
+              <li><a href="https://campushetspoor.be/" target="_blank" rel="noopener noreferrer">Home</a></li>
+              <li>
+                <a href="https://campushetspoor.be/campus-het-spoor-mol-contact/" target="_blank" rel="noopener noreferrer">Contact</a>
+              </li>
+              <li><a href="mailto:info@campushetspoor.be">Contacteer ons</a></li>
+              <li>
+                <a href="https://sgmol.smartschool.be/forms/form/63/a98dd2c0-41c1-4fa6-9af0-b2d7f6f9df7c" target="_blank" rel="noopener noreferrer">Afwezigheid melden</a>
+              </li>
+            </ul>
+          </section>
+
+          <section>
+            <h3 class="footer-title">Volg Campus Het Spoor</h3>
+            <div class="social-row" aria-label="Sociale kanalen">
+              <a class="social-icon" href="https://www.facebook.com/campushetspoor/" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><i class="fa-brands fa-facebook-f" aria-hidden="true"></i></a>
+              <a class="social-icon" href="https://www.youtube.com/channel/UCirHMZrmba_xcQLKKKvZRkQ" target="_blank" rel="noopener noreferrer" aria-label="YouTube"><i class="fa-brands fa-youtube" aria-hidden="true"></i></a>
+              <a class="social-icon" href="mailto:info@campushetspoor.be" aria-label="E-mail"><i class="fa-solid fa-envelope" aria-hidden="true"></i></a>
+              <a class="social-icon" href="https://www.instagram.com/campushetspoor/?hl=nl" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="fa-brands fa-instagram" aria-hidden="true"></i></a>
+              <a class="social-icon" href="https://sgmol.smartschool.be/login" target="_blank" rel="noopener noreferrer" aria-label="Smartschool"><i class="fa-solid fa-graduation-cap" aria-hidden="true"></i></a>
+            </div>
+          </section>
+        </div>
+
+        <div class="footer-bottom">
+          <a href="https://campushetspoor.be/campus-het-spoor-mol-privacy-beleid-cookiebeleid" target="_blank" rel="noopener noreferrer">Privacy Beleid - cookiebeleid</a>
+          <span>Campus Het Spoor</span>
+        </div>
+      </div>
+    </footer>
 
     <script>
       const form = document.getElementById("loanForm");
+      const brandLogo = document.getElementById("brandLogo");
+      const siteFavicon = document.getElementById("siteFavicon");
       const studentNameInput = document.getElementById("studentName");
       const subjectField = document.getElementById("subjectField");
       const statusMessage = document.getElementById("statusMessage");
@@ -276,18 +583,44 @@
       const signatureCtx = signatureCanvas.getContext("2d");
       let isDrawing = false;
       let hasSignature = false;
+      const localLogoPath = "./chslogo.png";
+      const fallbackLogoPath =
+        "https://campushetspoor.be/wp-content/uploads/2024/04/campus_het_spoor_logo-removebg-preview.png";
+
+      function applyBrandAssets(path) {
+        brandLogo.src = path;
+        siteFavicon.href = path;
+      }
+
+      function initializeBrandAssets() {
+        const testImage = new Image();
+        testImage.onload = () => applyBrandAssets(localLogoPath);
+        testImage.onerror = () => applyBrandAssets(fallbackLogoPath);
+        testImage.src = localLogoPath;
+      }
+
+      function setupSignatureContext() {
+        signatureCtx.lineWidth = 2;
+        signatureCtx.lineJoin = "round";
+        signatureCtx.lineCap = "round";
+        signatureCtx.strokeStyle = "#00762f";
+      }
 
       function resizeSignatureCanvas() {
+        const previousContent = signatureCanvas.toDataURL("image/png");
         const ratio = Math.max(window.devicePixelRatio || 1, 1);
         const width = signatureCanvas.clientWidth;
         const height = signatureCanvas.clientHeight;
         signatureCanvas.width = Math.floor(width * ratio);
         signatureCanvas.height = Math.floor(height * ratio);
         signatureCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
-        signatureCtx.lineWidth = 2;
-        signatureCtx.lineJoin = "round";
-        signatureCtx.lineCap = "round";
-        signatureCtx.strokeStyle = "#00762f";
+        setupSignatureContext();
+
+        if (hasSignature) {
+          const image = new Image();
+          image.onload = () => signatureCtx.drawImage(image, 0, 0, width, height);
+          image.src = previousContent;
+        }
       }
 
       function clearSignature() {
@@ -327,6 +660,7 @@
         isDrawing = false;
       }
 
+      initializeBrandAssets();
       resizeSignatureCanvas();
       window.addEventListener("resize", resizeSignatureCanvas);
       clearSignatureBtn.addEventListener("click", clearSignature);
@@ -334,12 +668,6 @@
       signatureCanvas.addEventListener("pointermove", draw);
       signatureCanvas.addEventListener("pointerup", stopDrawing);
       signatureCanvas.addEventListener("pointerleave", stopDrawing);
-
-      if (window.location.protocol === "file:") {
-        statusMessage.className = "status error";
-        statusMessage.textContent =
-          "Lokaal openen via bestand (file://) werkt niet voor mail. Start een lokale webserver.";
-      }
 
       form.addEventListener("submit", async (event) => {
         event.preventDefault();
