@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import os
 import secrets
 import sqlite3
@@ -71,6 +72,7 @@ app.add_middleware(
 
 app.mount("/static", StaticFiles(directory=str(BASE_DIR)), name="static")
 app.mount("/storage/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
+logger = logging.getLogger("chs-laptop")
 
 
 class HealthResponse(BaseModel):
@@ -241,14 +243,18 @@ async def submit(
         )
         conn.commit()
 
-    send_submission_email(
-        student_name=student_name,
-        laptop_number=laptop_number,
-        laptop_ok=laptop_ok,
-        damage_status=damage_evidence_status if damage_path else "Geen bestand toegevoegd",
-        signature_status=signature_status,
-        damage_file_path=damage_path,
-        signature_file_path=signature_path,
-    )
+    try:
+        send_submission_email(
+            student_name=student_name,
+            laptop_number=laptop_number,
+            laptop_ok=laptop_ok,
+            damage_status=damage_evidence_status if damage_path else "Geen bestand toegevoegd",
+            signature_status=signature_status,
+            damage_file_path=damage_path,
+            signature_file_path=signature_path,
+        )
+    except Exception as exc:
+        logger.exception("Mail verzending mislukt")
+        raise HTTPException(status_code=502, detail=f"Mail verzending mislukt: {exc}") from exc
 
     return JSONResponse({"ok": True, "message": "Bevestiging verzonden."})
