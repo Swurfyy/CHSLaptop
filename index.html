@@ -39,6 +39,8 @@
         color: var(--chs-text);
         background: radial-gradient(circle at top right, #f8fcf7 0%, var(--chs-bg) 55%, #edf5ec 100%);
         min-height: 100vh;
+        display: flex;
+        flex-direction: column;
       }
 
       .site-header {
@@ -106,6 +108,8 @@
         max-width: 980px;
         margin: 42px auto;
         padding: 0 20px;
+        width: 100%;
+        flex: 1;
       }
 
       .layout {
@@ -238,9 +242,11 @@
         background: #ffffff;
         color: #1f4d25;
         border-radius: 12px;
-        padding: 14px 16px;
+        min-height: 62px;
+        padding: 18px 20px;
         font: inherit;
         font-weight: 700;
+        font-size: 1rem;
         cursor: pointer;
       }
 
@@ -674,7 +680,7 @@
 
         <div class="footer-bottom">
           <a href="https://campushetspoor.be/campus-het-spoor-mol-privacy-beleid-cookiebeleid" target="_blank" rel="noopener noreferrer">Privacy Beleid - cookiebeleid</a>
-          <span>Campus Het Spoor</span>
+          <span>Made by Zendé @ Campus Het Spoor</span>
         </div>
       </div>
     </footer>
