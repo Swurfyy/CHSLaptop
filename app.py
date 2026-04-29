@@ -1,16 +1,16 @@
 from __future__ import annotations
 
 import logging
+import mimetypes
 import os
 import secrets
+import smtplib
 import sqlite3
-import mimetypes
 from contextlib import closing
 from datetime import datetime, timezone
 from email.message import EmailMessage
 from pathlib import Path
 
-import smtplib
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
@@ -23,9 +23,10 @@ UPLOAD_DIR = BASE_DIR / "storage" / "uploads"
 DB_DIR = BASE_DIR / "storage" / "db"
 DB_PATH = DB_DIR / "submissions.db"
 ENV_PATH = BASE_DIR / ".env"
-
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 DB_DIR.mkdir(parents=True, exist_ok=True)
+
+logger = logging.getLogger("chs-laptop")
 
 
 def load_dotenv_if_present() -> None:
@@ -57,11 +58,9 @@ MAIL_FROM = env("MAIL_FROM", SMTP_USER)
 MAIL_TO = env("MAIL_TO")
 MAIL_SUBJECT_PREFIX = env("MAIL_SUBJECT_PREFIX", "Leenlaptop")
 MAX_UPLOAD_MB = int(env("MAX_UPLOAD_MB", "10"))
-
 ALLOWED_IMAGE_TYPES = {"image/png", "image/jpeg", "image/jpg", "image/webp", "image/heic", "image/heif"}
 
 app = FastAPI(title="CHS Laptop Form")
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -69,10 +68,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 app.mount("/static", StaticFiles(directory=str(BASE_DIR)), name="static")
 app.mount("/storage/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
-logger = logging.getLogger("chs-laptop")
 
 
 class HealthResponse(BaseModel):
@@ -90,13 +87,30 @@ def init_db() -> None:
     with closing(get_db()) as conn:
         conn.execute(
             """
-            CREATE TABLE IF NOT EXISTS submissions (
+            CREATE TABLE IF NOT EXISTS loan_submissions (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 created_at TEXT NOT NULL,
                 student_name TEXT NOT NULL,
                 laptop_number TEXT NOT NULL,
                 laptop_ok TEXT NOT NULL,
                 damage_evidence_status TEXT NOT NULL,
+                signature_status TEXT NOT NULL,
+                damage_file_path TEXT,
+                signature_file_path TEXT
+            )
+            """
+        )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS return_submissions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                created_at TEXT NOT NULL,
+                student_name TEXT NOT NULL,
+                laptop_number TEXT NOT NULL,
+                returned_at TEXT NOT NULL,
+                laptop_ok TEXT NOT NULL,
+                damage_evidence_status TEXT NOT NULL,
+                remarks TEXT NOT NULL,
                 signature_status TEXT NOT NULL,
                 damage_file_path TEXT,
                 signature_file_path TEXT
@@ -114,11 +128,9 @@ def sanitize(value: str) -> str:
 async def save_upload(upload: UploadFile | None, prefix: str, student_name: str) -> str | None:
     if upload is None or not upload.filename:
         return None
-
     content_type = (upload.content_type or "").lower()
     if content_type not in ALLOWED_IMAGE_TYPES:
         raise HTTPException(status_code=400, detail=f"Ongeldig bestandstype voor {prefix}.")
-
     payload = await upload.read()
     max_bytes = MAX_UPLOAD_MB * 1024 * 1024
     if len(payload) > max_bytes:
@@ -127,46 +139,23 @@ async def save_upload(upload: UploadFile | None, prefix: str, student_name: str)
     ext = Path(upload.filename).suffix.lower() or ".png"
     stamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
     safe_student = sanitize(student_name.replace(" ", "-").lower())
-    unique = secrets.token_hex(4)
-    filename = f"{prefix}-{safe_student}-{stamp}-{unique}{ext}"
+    filename = f"{prefix}-{safe_student}-{stamp}-{secrets.token_hex(4)}{ext}"
     absolute_path = UPLOAD_DIR / filename
     absolute_path.write_bytes(payload)
     return str(absolute_path.relative_to(BASE_DIR))
 
 
-def send_submission_email(
-    student_name: str,
-    laptop_number: str,
-    laptop_ok: str,
-    damage_status: str,
-    signature_status: str,
-    damage_file_path: str | None,
-    signature_file_path: str | None,
-) -> None:
+def send_email(subject: str, body_lines: list[str], attachment_paths: list[str | None]) -> None:
     if not all([SMTP_HOST, SMTP_USER, SMTP_PASS, MAIL_FROM, MAIL_TO]):
         raise RuntimeError("SMTP config ontbreekt. Vul .env variabelen in.")
 
     msg = EmailMessage()
-    msg["Subject"] = f"{MAIL_SUBJECT_PREFIX} - {student_name}"
+    msg["Subject"] = subject
     msg["From"] = MAIL_FROM
     msg["To"] = MAIL_TO
-
-    body_lines = [
-        "Nieuwe laptop-uitleen bevestiging",
-        "",
-        f"Student: {student_name}",
-        f"Laptop-NR: {laptop_number}",
-        f"Laptop in orde: {laptop_ok}",
-        f"Schade bewijsfoto: {damage_status}",
-        f"Handtekening: {signature_status}",
-        "",
-        "Bijlagen:",
-        f"- Schadefoto: {'ja' if damage_file_path else 'nee'}",
-        f"- Handtekening: {'ja' if signature_file_path else 'nee'}",
-    ]
     msg.set_content("\n".join(body_lines))
 
-    for rel_path in [damage_file_path, signature_file_path]:
+    for rel_path in attachment_paths:
         if not rel_path:
             continue
         file_path = BASE_DIR / rel_path
@@ -186,6 +175,15 @@ def send_submission_email(
         server.send_message(msg)
 
 
+def ensure_yes_no(value: str) -> None:
+    if value not in {"Ja", "Nee"}:
+        raise HTTPException(status_code=400, detail="Laptop-status ongeldig.")
+
+
+def normalize_damage_status(path: str | None, status: str) -> str:
+    return status if path else "Geen bestand toegevoegd"
+
+
 @app.on_event("startup")
 def startup() -> None:
     init_db()
@@ -202,7 +200,7 @@ def health() -> HealthResponse:
 
 
 @app.post("/submit")
-async def submit(
+async def submit_loan(
     student_name: str = Form(...),
     laptop_number: str = Form(...),
     laptop_ok: str = Form(...),
@@ -211,21 +209,21 @@ async def submit(
     damage_evidence: UploadFile | None = File(None),
     signature_file: UploadFile = File(...),
 ) -> JSONResponse:
-    if laptop_ok not in {"Ja", "Nee"}:
-        raise HTTPException(status_code=400, detail="Laptop-status ongeldig.")
+    ensure_yes_no(laptop_ok)
     if laptop_ok == "Nee" and damage_evidence is None:
         raise HTTPException(status_code=400, detail="Bewijsfoto is verplicht bij 'Nee'.")
 
-    damage_path = await save_upload(damage_evidence, "schade", student_name)
-    signature_path = await save_upload(signature_file, "handtekening", student_name)
+    damage_path = await save_upload(damage_evidence, "schade-uitleen", student_name)
+    signature_path = await save_upload(signature_file, "handtekening-uitleen", student_name)
     if signature_path is None:
         raise HTTPException(status_code=400, detail="Handtekening ontbreekt.")
 
     created_at = datetime.now(timezone.utc).isoformat()
+    normalized_damage_status = normalize_damage_status(damage_path, damage_evidence_status)
     with closing(get_db()) as conn:
         conn.execute(
             """
-            INSERT INTO submissions (
+            INSERT INTO loan_submissions (
                 created_at, student_name, laptop_number, laptop_ok,
                 damage_evidence_status, signature_status, damage_file_path, signature_file_path
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -235,7 +233,7 @@ async def submit(
                 student_name,
                 laptop_number,
                 laptop_ok,
-                damage_evidence_status if damage_path else "Geen bestand toegevoegd",
+                normalized_damage_status,
                 signature_status,
                 damage_path,
                 signature_path,
@@ -244,17 +242,96 @@ async def submit(
         conn.commit()
 
     try:
-        send_submission_email(
-            student_name=student_name,
-            laptop_number=laptop_number,
-            laptop_ok=laptop_ok,
-            damage_status=damage_evidence_status if damage_path else "Geen bestand toegevoegd",
-            signature_status=signature_status,
-            damage_file_path=damage_path,
-            signature_file_path=signature_path,
+        send_email(
+            subject=f"{MAIL_SUBJECT_PREFIX} - Uitlenen - {student_name}",
+            body_lines=[
+                "Nieuwe laptop-uitlening",
+                "",
+                f"Student: {student_name}",
+                f"Laptop-NR: {laptop_number}",
+                f"Laptop in orde: {laptop_ok}",
+                f"Schade bewijsfoto: {normalized_damage_status}",
+                f"Handtekening: {signature_status}",
+                "",
+                f"Bijlage schadefoto: {'ja' if damage_path else 'nee'}",
+                f"Bijlage handtekening: {'ja' if signature_path else 'nee'}",
+            ],
+            attachment_paths=[damage_path, signature_path],
         )
     except Exception as exc:
-        logger.exception("Mail verzending mislukt")
+        logger.exception("Mail verzending uitlening mislukt")
         raise HTTPException(status_code=502, detail=f"Mail verzending mislukt: {exc}") from exc
 
-    return JSONResponse({"ok": True, "message": "Bevestiging verzonden."})
+    return JSONResponse({"ok": True, "message": "Uitlening succesvol verzonden."})
+
+
+@app.post("/submit-return")
+async def submit_return(
+    student_name: str = Form(...),
+    laptop_number: str = Form(...),
+    returned_at: str = Form(...),
+    laptop_ok: str = Form(...),
+    damage_evidence_status: str = Form("Geen bestand toegevoegd"),
+    remarks: str = Form(""),
+    signature_status: str = Form("Bijlage toegevoegd (PNG)"),
+    damage_evidence: UploadFile | None = File(None),
+    signature_file: UploadFile = File(...),
+) -> JSONResponse:
+    ensure_yes_no(laptop_ok)
+    if laptop_ok == "Nee" and damage_evidence is None:
+        raise HTTPException(status_code=400, detail="Bewijsfoto is verplicht bij 'Nee'.")
+
+    damage_path = await save_upload(damage_evidence, "schade-inlever", student_name)
+    signature_path = await save_upload(signature_file, "handtekening-inlever", student_name)
+    if signature_path is None:
+        raise HTTPException(status_code=400, detail="Handtekening ontbreekt.")
+
+    created_at = datetime.now(timezone.utc).isoformat()
+    normalized_damage_status = normalize_damage_status(damage_path, damage_evidence_status)
+    with closing(get_db()) as conn:
+        conn.execute(
+            """
+            INSERT INTO return_submissions (
+                created_at, student_name, laptop_number, returned_at, laptop_ok,
+                damage_evidence_status, remarks, signature_status, damage_file_path, signature_file_path
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                created_at,
+                student_name,
+                laptop_number,
+                returned_at,
+                laptop_ok,
+                normalized_damage_status,
+                remarks.strip(),
+                signature_status,
+                damage_path,
+                signature_path,
+            ),
+        )
+        conn.commit()
+
+    try:
+        send_email(
+            subject=f"{MAIL_SUBJECT_PREFIX} - Inleveren - {student_name}",
+            body_lines=[
+                "Nieuwe laptop-inlevering",
+                "",
+                f"Student: {student_name}",
+                f"Laptop-NR: {laptop_number}",
+                f"Ingeleverd op: {returned_at}",
+                f"Laptop nog in orde: {laptop_ok}",
+                f"Schade bewijsfoto: {normalized_damage_status}",
+                f"Opmerkingen: {remarks.strip() or '-'}",
+                f"Handtekening: {signature_status}",
+                "",
+                f"Bijlage schadefoto: {'ja' if damage_path else 'nee'}",
+                f"Bijlage handtekening: {'ja' if signature_path else 'nee'}",
+            ],
+            attachment_paths=[damage_path, signature_path],
+        )
+    except Exception as exc:
+        logger.exception("Mail verzending inlevering mislukt")
+        raise HTTPException(status_code=502, detail=f"Mail verzending mislukt: {exc}") from exc
+
+    return JSONResponse({"ok": True, "message": "Inlevering succesvol verzonden."})

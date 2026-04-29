@@ -226,6 +226,39 @@
         cursor: not-allowed;
       }
 
+      .choice-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        margin-top: 12px;
+      }
+
+      .choice-btn {
+        border: 1px solid #bed4bf;
+        background: #ffffff;
+        color: #1f4d25;
+        border-radius: 12px;
+        padding: 14px 16px;
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .back-btn {
+        border: 1px solid #bed4bf;
+        background: #ffffff;
+        color: #1f4d25;
+        border-radius: 8px;
+        padding: 8px 12px;
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
       .status {
         min-height: 24px;
         margin: 4px 0 0;
@@ -248,7 +281,8 @@
         overflow: hidden;
       }
 
-      #signatureCanvas {
+      #signatureCanvasLoan,
+      #signatureCanvasReturn {
         display: block;
         width: 100%;
         height: 210px;
@@ -419,6 +453,10 @@
           gap: 14px;
         }
 
+        .choice-grid {
+          grid-template-columns: 1fr;
+        }
+
         .footer-bottom {
           flex-direction: column;
           align-items: flex-start;
@@ -456,9 +494,20 @@
     </header>
 
     <main class="wrapper">
-      <div class="layout">
+      <section id="landingView" class="panel campus-panel" aria-labelledby="landing-title">
+        <h1 id="landing-title" class="campus-title">Laptopregistratie</h1>
+        <p class="intro">
+          Kies hieronder de gewenste actie voor de student.
+        </p>
+        <div class="choice-grid">
+          <button id="goLoanBtn" class="choice-btn" type="button">Laptop Uitlenen</button>
+          <button id="goReturnBtn" class="choice-btn" type="button">Laptop Inleveren</button>
+        </div>
+      </section>
+
+      <div id="loanView" class="layout hidden">
         <aside class="panel campus-panel" aria-label="Campus gegevens">
-          <h1 id="page-title" class="campus-title">Campus Het Spoor</h1>
+          <h1 class="campus-title">Laptop Uitlenen</h1>
           <p class="campus-address">
             Begonialaan 34<br />
             2400 Mol
@@ -466,32 +515,24 @@
           <span class="info-chip">Alle velden zijn verplicht</span>
         </aside>
 
-        <section class="panel form-panel" aria-labelledby="form-title">
+        <section class="panel form-panel" aria-labelledby="loan-form-title">
           <header class="form-header">
-            <h2 id="form-title" class="form-title">Bevestiging leenlaptop</h2>
+            <button id="backFromLoanBtn" class="back-btn" type="button">Terug</button>
+            <h2 id="loan-form-title" class="form-title">Bevestiging leenlaptop</h2>
             <p class="intro">
-              Registreer hieronder de uitgedeelde laptop en bevestig de staat van het toestel
-              bij ontvangst.
+              Registreer hieronder de uitgedeelde laptop en bevestig de staat van het toestel bij ontvangst.
             </p>
           </header>
 
-          <form
-            id="loanForm"
-            method="POST"
-            action="/submit"
-            enctype="multipart/form-data"
-            novalidate
-          >
+          <form id="loanForm" method="POST" action="/submit" enctype="multipart/form-data" novalidate>
             <div>
               <label for="studentName">Naam van student</label>
               <input id="studentName" name="student_name" type="text" required />
             </div>
-
             <div>
               <label for="laptopNumber">Laptop-NR</label>
               <input id="laptopNumber" name="laptop_number" type="text" required />
             </div>
-
             <div>
               <label for="laptopOk">Laptop is in orde (Ja / Nee)</label>
               <select id="laptopOk" name="laptop_ok" required>
@@ -500,49 +541,97 @@
                 <option value="Nee">Nee</option>
               </select>
             </div>
-
             <div>
               <label for="damageEvidence">Bewijsfoto eventuele schade</label>
-              <input
-                id="damageEvidence"
-                name="damage_evidence"
-                type="file"
-                accept="image/*"
-                capture="environment"
-              />
-              <input
-                type="hidden"
-                id="damageEvidenceStatus"
-                name="damage_evidence_status"
-                value="Geen bestand toegevoegd"
-              />
+              <input id="damageEvidence" name="damage_evidence" type="file" accept="image/*" capture="environment" />
+              <input type="hidden" id="damageEvidenceStatus" name="damage_evidence_status" value="Geen bestand toegevoegd" />
               <p class="signature-hint" id="damageEvidenceHint">
                 Voeg een foto toe als er schade is. Verplicht wanneer "Laptop is in orde" op Nee staat.
               </p>
             </div>
-
             <div>
-              <label for="signatureCanvas">Handtekening student</label>
+              <label for="signatureCanvasLoan">Handtekening student</label>
               <div class="signature-wrap">
-                <canvas id="signatureCanvas"></canvas>
+                <canvas id="signatureCanvasLoan"></canvas>
                 <div class="signature-actions">
-                  <button class="clear-signature-btn" id="clearSignatureBtn" type="button">
-                    Handtekening wissen
-                  </button>
+                  <button class="clear-signature-btn" id="clearSignatureBtnLoan" type="button">Handtekening wissen</button>
                 </div>
               </div>
-              <p class="signature-hint">
-                Teken met vinger, stylus of muis. Handtekening is verplicht.
-              </p>
-              <input type="hidden" id="signatureData" name="signature_status" value="Bijlage toegevoegd" />
+              <p class="signature-hint">Teken met vinger, stylus of muis. Handtekening is verplicht.</p>
+              <input type="hidden" id="signatureDataLoan" name="signature_status" value="Bijlage toegevoegd" />
             </div>
-
             <button class="submit-btn" type="submit">Bevestiging verzenden</button>
-            <p id="statusMessage" class="status" role="status" aria-live="polite"></p>
+            <p id="statusMessageLoan" class="status" role="status" aria-live="polite"></p>
           </form>
         </section>
       </div>
 
+      <div id="returnView" class="layout hidden">
+        <aside class="panel campus-panel" aria-label="Campus gegevens">
+          <h1 class="campus-title">Laptop Inleveren</h1>
+          <p class="campus-address">
+            Begonialaan 34<br />
+            2400 Mol
+          </p>
+          <span class="info-chip">Vul de inlevering volledig in</span>
+        </aside>
+
+        <section class="panel form-panel" aria-labelledby="return-form-title">
+          <header class="form-header">
+            <button id="backFromReturnBtn" class="back-btn" type="button">Terug</button>
+            <h2 id="return-form-title" class="form-title">Bevestiging inlevering laptop</h2>
+            <p class="intro">Registreer hieronder de ingeleverde laptop en noteer eventuele opmerkingen.</p>
+          </header>
+
+          <form id="returnForm" method="POST" action="/submit-return" enctype="multipart/form-data" novalidate>
+            <div>
+              <label for="returnStudentName">Naam van student</label>
+              <input id="returnStudentName" name="student_name" type="text" required />
+            </div>
+            <div>
+              <label for="returnLaptopNumber">Laptop-NR</label>
+              <input id="returnLaptopNumber" name="laptop_number" type="text" required />
+            </div>
+            <div>
+              <label for="returnedAt">Ingeleverd op</label>
+              <input id="returnedAt" name="returned_at" type="datetime-local" required />
+            </div>
+            <div>
+              <label for="returnLaptopOk">Laptop nog in orde (Ja / Nee)</label>
+              <select id="returnLaptopOk" name="laptop_ok" required>
+                <option value="" selected disabled>Kies Ja of Nee</option>
+                <option value="Ja">Ja</option>
+                <option value="Nee">Nee</option>
+              </select>
+            </div>
+            <div>
+              <label for="returnDamageEvidence">Bewijsfoto eventuele schade</label>
+              <input id="returnDamageEvidence" name="damage_evidence" type="file" accept="image/*" capture="environment" />
+              <input type="hidden" id="returnDamageEvidenceStatus" name="damage_evidence_status" value="Geen bestand toegevoegd" />
+              <p class="signature-hint" id="returnDamageEvidenceHint">
+                Voeg een foto toe als er schade is. Verplicht wanneer "Laptop nog in orde" op Nee staat.
+              </p>
+            </div>
+            <div>
+              <label for="returnRemarks">Opmerkingen</label>
+              <input id="returnRemarks" name="remarks" type="text" />
+            </div>
+            <div>
+              <label for="signatureCanvasReturn">Handtekening</label>
+              <div class="signature-wrap">
+                <canvas id="signatureCanvasReturn"></canvas>
+                <div class="signature-actions">
+                  <button class="clear-signature-btn" id="clearSignatureBtnReturn" type="button">Handtekening wissen</button>
+                </div>
+              </div>
+              <p class="signature-hint">Teken met vinger, stylus of muis. Handtekening is verplicht.</p>
+              <input type="hidden" id="signatureDataReturn" name="signature_status" value="Bijlage toegevoegd" />
+            </div>
+            <button class="submit-btn" type="submit">Inlevering verzenden</button>
+            <p id="statusMessageReturn" class="status" role="status" aria-live="polite"></p>
+          </form>
+        </section>
+      </div>
     </main>
 
     <footer class="footer">
@@ -591,22 +680,15 @@
     </footer>
 
     <script>
-      const form = document.getElementById("loanForm");
       const brandLogo = document.getElementById("brandLogo");
       const siteFavicon = document.getElementById("siteFavicon");
-      const studentNameInput = document.getElementById("studentName");
-      const laptopOkSelect = document.getElementById("laptopOk");
-      const statusMessage = document.getElementById("statusMessage");
-      const submitButton = form.querySelector("button[type='submit']");
-      const damageEvidenceInput = document.getElementById("damageEvidence");
-      const damageEvidenceStatusField = document.getElementById("damageEvidenceStatus");
-      const damageEvidenceHint = document.getElementById("damageEvidenceHint");
-      const signatureCanvas = document.getElementById("signatureCanvas");
-      const signatureDataField = document.getElementById("signatureData");
-      const clearSignatureBtn = document.getElementById("clearSignatureBtn");
-      const signatureCtx = signatureCanvas.getContext("2d");
-      let isDrawing = false;
-      let hasSignature = false;
+      const landingView = document.getElementById("landingView");
+      const loanView = document.getElementById("loanView");
+      const returnView = document.getElementById("returnView");
+      const goLoanBtn = document.getElementById("goLoanBtn");
+      const goReturnBtn = document.getElementById("goReturnBtn");
+      const backFromLoanBtn = document.getElementById("backFromLoanBtn");
+      const backFromReturnBtn = document.getElementById("backFromReturnBtn");
       const localLogoPath = "/static/chslogo.png";
       const fallbackLogoPath =
         "https://campushetspoor.be/wp-content/uploads/2024/04/campus_het_spoor_logo-removebg-preview.png";
@@ -623,92 +705,24 @@
         testImage.src = localLogoPath;
       }
 
-      function setupSignatureContext() {
-        signatureCtx.lineWidth = 2;
-        signatureCtx.lineJoin = "round";
-        signatureCtx.lineCap = "round";
-        signatureCtx.strokeStyle = "#00762f";
+      function showLanding() {
+        landingView.classList.remove("hidden");
+        loanView.classList.add("hidden");
+        returnView.classList.add("hidden");
       }
 
-      function resizeSignatureCanvas() {
-        const previousContent = signatureCanvas.toDataURL("image/png");
-        const ratio = Math.max(window.devicePixelRatio || 1, 1);
-        const width = signatureCanvas.clientWidth;
-        const height = signatureCanvas.clientHeight;
-        signatureCanvas.width = Math.floor(width * ratio);
-        signatureCanvas.height = Math.floor(height * ratio);
-        signatureCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
-        setupSignatureContext();
-
-        if (hasSignature) {
-          const image = new Image();
-          image.onload = () => signatureCtx.drawImage(image, 0, 0, width, height);
-          image.src = previousContent;
-        }
+      function showLoanForm() {
+        landingView.classList.add("hidden");
+        loanView.classList.remove("hidden");
+        returnView.classList.add("hidden");
+        loanFlow.signature.resize();
       }
 
-      function clearSignature() {
-        signatureCtx.clearRect(0, 0, signatureCanvas.clientWidth, signatureCanvas.clientHeight);
-        signatureDataField.value = "";
-        hasSignature = false;
-      }
-
-      function pointerPosition(event) {
-        const rect = signatureCanvas.getBoundingClientRect();
-        return {
-          x: event.clientX - rect.left,
-          y: event.clientY - rect.top,
-        };
-      }
-
-      function startDrawing(event) {
-        event.preventDefault();
-        isDrawing = true;
-        const pos = pointerPosition(event);
-        signatureCtx.beginPath();
-        signatureCtx.moveTo(pos.x, pos.y);
-      }
-
-      function draw(event) {
-        if (!isDrawing) return;
-        event.preventDefault();
-        const pos = pointerPosition(event);
-        signatureCtx.lineTo(pos.x, pos.y);
-        signatureCtx.stroke();
-        hasSignature = true;
-      }
-
-      function stopDrawing(event) {
-        if (!isDrawing) return;
-        event.preventDefault();
-        isDrawing = false;
-      }
-
-      function getSignaturePngDataUrl() {
-        const targetWidth = Math.max(1, signatureCanvas.clientWidth);
-        const targetHeight = Math.max(1, signatureCanvas.clientHeight);
-        const sourceWidth = Math.max(1, signatureCanvas.width);
-        const sourceHeight = Math.max(1, signatureCanvas.height);
-
-        const exportCanvas = document.createElement("canvas");
-        exportCanvas.width = targetWidth;
-        exportCanvas.height = targetHeight;
-        const exportCtx = exportCanvas.getContext("2d");
-        exportCtx.fillStyle = "#ffffff";
-        exportCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
-        exportCtx.drawImage(
-          signatureCanvas,
-          0,
-          0,
-          sourceWidth,
-          sourceHeight,
-          0,
-          0,
-          targetWidth,
-          targetHeight
-        );
-
-        return exportCanvas.toDataURL("image/png");
+      function showReturnForm() {
+        landingView.classList.add("hidden");
+        loanView.classList.add("hidden");
+        returnView.classList.remove("hidden");
+        returnFlow.signature.resize();
       }
 
       function dataUrlToBlob(dataUrl) {
@@ -723,85 +737,243 @@
         return new Blob([bytes], { type: mime });
       }
 
-      function updateDamageEvidenceRequirement() {
-        const isNotOk = laptopOkSelect.value === "Nee";
-        damageEvidenceInput.required = isNotOk;
-        damageEvidenceHint.textContent = isNotOk
-          ? 'Bewijsfoto is nu verplicht omdat "Laptop is in orde" op Nee staat.'
-          : 'Bewijsfoto is optioneel wanneer "Laptop is in orde" op Ja staat.';
+      function createSignaturePad(canvas, clearButton, hiddenStatusField) {
+        const ctx = canvas.getContext("2d");
+        let isDrawing = false;
+        let hasSignature = false;
+
+        function setupContext() {
+          ctx.lineWidth = 2;
+          ctx.lineJoin = "round";
+          ctx.lineCap = "round";
+          ctx.strokeStyle = "#00762f";
+        }
+
+        function resize() {
+          const previousContent = canvas.toDataURL("image/png");
+          const ratio = Math.max(window.devicePixelRatio || 1, 1);
+          const width = canvas.clientWidth;
+          const height = canvas.clientHeight;
+          canvas.width = Math.floor(width * ratio);
+          canvas.height = Math.floor(height * ratio);
+          ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+          setupContext();
+          if (hasSignature) {
+            const image = new Image();
+            image.onload = () => ctx.drawImage(image, 0, 0, width, height);
+            image.src = previousContent;
+          }
+        }
+
+        function clear() {
+          ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+          hiddenStatusField.value = "";
+          hasSignature = false;
+        }
+
+        function pointerPosition(event) {
+          const rect = canvas.getBoundingClientRect();
+          return { x: event.clientX - rect.left, y: event.clientY - rect.top };
+        }
+
+        function startDrawing(event) {
+          event.preventDefault();
+          isDrawing = true;
+          const pos = pointerPosition(event);
+          ctx.beginPath();
+          ctx.moveTo(pos.x, pos.y);
+        }
+
+        function draw(event) {
+          if (!isDrawing) return;
+          event.preventDefault();
+          const pos = pointerPosition(event);
+          ctx.lineTo(pos.x, pos.y);
+          ctx.stroke();
+          hasSignature = true;
+        }
+
+        function stopDrawing(event) {
+          if (!isDrawing) return;
+          event.preventDefault();
+          isDrawing = false;
+        }
+
+        function getPngBlob() {
+          const targetWidth = Math.max(1, canvas.clientWidth);
+          const targetHeight = Math.max(1, canvas.clientHeight);
+          const sourceWidth = Math.max(1, canvas.width);
+          const sourceHeight = Math.max(1, canvas.height);
+          const exportCanvas = document.createElement("canvas");
+          exportCanvas.width = targetWidth;
+          exportCanvas.height = targetHeight;
+          const exportCtx = exportCanvas.getContext("2d");
+          exportCtx.fillStyle = "#ffffff";
+          exportCtx.fillRect(0, 0, targetWidth, targetHeight);
+          exportCtx.drawImage(canvas, 0, 0, sourceWidth, sourceHeight, 0, 0, targetWidth, targetHeight);
+          return dataUrlToBlob(exportCanvas.toDataURL("image/png"));
+        }
+
+        clearButton.addEventListener("click", clear);
+        canvas.addEventListener("pointerdown", startDrawing);
+        canvas.addEventListener("pointermove", draw);
+        canvas.addEventListener("pointerup", stopDrawing);
+        canvas.addEventListener("pointerleave", stopDrawing);
+        resize();
+
+        return {
+          resize,
+          clear,
+          get hasSignature() {
+            return hasSignature;
+          },
+          getBlob() {
+            return getPngBlob();
+          },
+        };
       }
 
-      function updateDamageEvidenceStatus() {
-        const damageAttached = damageEvidenceInput.files && damageEvidenceInput.files.length > 0;
-        damageEvidenceStatusField.value = damageAttached ? "Bestand toegevoegd" : "Geen bestand toegevoegd";
+      function setupDamageField(selectEl, inputEl, statusEl, hintEl, mandatoryLabel) {
+        function updateRequirement() {
+          const required = selectEl.value === "Nee";
+          inputEl.required = required;
+          hintEl.textContent = required
+            ? `Bewijsfoto is nu verplicht omdat "${mandatoryLabel}" op Nee staat.`
+            : `Bewijsfoto is optioneel wanneer "${mandatoryLabel}" op Ja staat.`;
+        }
+
+        function updateStatus() {
+          const attached = inputEl.files && inputEl.files.length > 0;
+          statusEl.value = attached ? "Bestand toegevoegd" : "Geen bestand toegevoegd";
+        }
+
+        selectEl.addEventListener("change", updateRequirement);
+        inputEl.addEventListener("change", updateStatus);
+        updateRequirement();
+        updateStatus();
+
+        return {
+          refresh() {
+            updateRequirement();
+            updateStatus();
+          },
+        };
       }
+
+      function setupFormFlow(config) {
+        const signature = createSignaturePad(config.signatureCanvas, config.clearSignatureBtn, config.signatureStatusField);
+        const damage = setupDamageField(
+          config.laptopOkSelect,
+          config.damageInput,
+          config.damageStatusField,
+          config.damageHint,
+          config.okLabel
+        );
+
+        config.form.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          if (!config.form.checkValidity()) {
+            config.form.reportValidity();
+            return;
+          }
+
+          if (!signature.hasSignature) {
+            config.statusMessage.className = "status error";
+            config.statusMessage.textContent = "Handtekening is verplicht.";
+            return;
+          }
+
+          const studentName = config.studentNameInput.value.trim();
+          const signatureBlob = signature.getBlob();
+          const signatureFilename = `handtekening-${studentName.replace(/\s+/g, "-").toLowerCase() || "student"}.png`;
+
+          config.submitButton.disabled = true;
+          config.signatureStatusField.value = "Bijlage toegevoegd (PNG)";
+          config.statusMessage.className = "status";
+          config.statusMessage.textContent = "Verzenden...";
+
+          try {
+            const formData = new FormData(config.form);
+            formData.set("student_name", studentName);
+            formData.set("signature_status", "Bijlage toegevoegd (PNG)");
+            formData.append("signature_file", signatureBlob, signatureFilename);
+
+            const response = await fetch(config.form.action, {
+              method: "POST",
+              body: formData,
+            });
+            if (!response.ok) {
+              const errorPayload = await response.json().catch(() => ({}));
+              throw new Error(errorPayload.detail || "Server fout");
+            }
+
+            const result = await response.json().catch(() => ({}));
+            config.statusMessage.className = "status success";
+            config.statusMessage.textContent = result.message || "Bevestiging succesvol verzonden.";
+            config.form.reset();
+            signature.clear();
+            damage.refresh();
+            if (config.setReturnDateNow) config.setReturnDateNow();
+          } catch (error) {
+            config.statusMessage.className = "status error";
+            config.statusMessage.textContent = error.message || "Verzending mislukt. Controleer internet en probeer opnieuw.";
+          } finally {
+            config.submitButton.disabled = false;
+          }
+        });
+
+        return { signature, damage };
+      }
+
+      function setDefaultReturnDate() {
+        const returnedAt = document.getElementById("returnedAt");
+        const now = new Date();
+        const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+        returnedAt.value = local;
+      }
+
+      const loanFlow = setupFormFlow({
+        form: document.getElementById("loanForm"),
+        studentNameInput: document.getElementById("studentName"),
+        laptopOkSelect: document.getElementById("laptopOk"),
+        damageInput: document.getElementById("damageEvidence"),
+        damageStatusField: document.getElementById("damageEvidenceStatus"),
+        damageHint: document.getElementById("damageEvidenceHint"),
+        signatureCanvas: document.getElementById("signatureCanvasLoan"),
+        clearSignatureBtn: document.getElementById("clearSignatureBtnLoan"),
+        signatureStatusField: document.getElementById("signatureDataLoan"),
+        submitButton: document.querySelector("#loanForm button[type='submit']"),
+        statusMessage: document.getElementById("statusMessageLoan"),
+        okLabel: "Laptop is in orde",
+      });
+
+      const returnFlow = setupFormFlow({
+        form: document.getElementById("returnForm"),
+        studentNameInput: document.getElementById("returnStudentName"),
+        laptopOkSelect: document.getElementById("returnLaptopOk"),
+        damageInput: document.getElementById("returnDamageEvidence"),
+        damageStatusField: document.getElementById("returnDamageEvidenceStatus"),
+        damageHint: document.getElementById("returnDamageEvidenceHint"),
+        signatureCanvas: document.getElementById("signatureCanvasReturn"),
+        clearSignatureBtn: document.getElementById("clearSignatureBtnReturn"),
+        signatureStatusField: document.getElementById("signatureDataReturn"),
+        submitButton: document.querySelector("#returnForm button[type='submit']"),
+        statusMessage: document.getElementById("statusMessageReturn"),
+        okLabel: "Laptop nog in orde",
+        setReturnDateNow: setDefaultReturnDate,
+      });
 
       initializeBrandAssets();
-      resizeSignatureCanvas();
-      window.addEventListener("resize", resizeSignatureCanvas);
-      clearSignatureBtn.addEventListener("click", clearSignature);
-      laptopOkSelect.addEventListener("change", updateDamageEvidenceRequirement);
-      damageEvidenceInput.addEventListener("change", updateDamageEvidenceStatus);
-      signatureCanvas.addEventListener("pointerdown", startDrawing);
-      signatureCanvas.addEventListener("pointermove", draw);
-      signatureCanvas.addEventListener("pointerup", stopDrawing);
-      signatureCanvas.addEventListener("pointerleave", stopDrawing);
-      updateDamageEvidenceRequirement();
-      updateDamageEvidenceStatus();
-
-      form.addEventListener("submit", async (event) => {
-        event.preventDefault();
-
-        if (!form.checkValidity()) {
-          form.reportValidity();
-          return;
-        }
-
-        if (!hasSignature) {
-          statusMessage.className = "status error";
-          statusMessage.textContent = "Handtekening is verplicht.";
-          return;
-        }
-
-        const studentName = studentNameInput.value.trim();
-        const signaturePng = getSignaturePngDataUrl();
-        const signatureBlob = dataUrlToBlob(signaturePng);
-        const signatureFilename = `handtekening-${studentName.replace(/\s+/g, "-").toLowerCase() || "student"}.png`;
-
-        submitButton.disabled = true;
-        signatureDataField.value = "Bijlage toegevoegd (PNG)";
-        statusMessage.className = "status";
-        statusMessage.textContent = "Verzenden...";
-
-        try {
-          const formData = new FormData(form);
-          formData.set("student_name", studentName);
-          formData.set("signature_status", "Bijlage toegevoegd (PNG)");
-          formData.append("signature_file", signatureBlob, signatureFilename);
-          const response = await fetch(form.action, {
-            method: "POST",
-            body: formData,
-          });
-          if (!response.ok) {
-            const errorPayload = await response.json().catch(() => ({}));
-            throw new Error(errorPayload.detail || "Server fout");
-          }
-          const result = await response.json().catch(() => ({}));
-
-          statusMessage.className = "status success";
-          statusMessage.textContent = result.message || "Bevestiging succesvol verzonden.";
-          form.reset();
-          clearSignature();
-          updateDamageEvidenceRequirement();
-          updateDamageEvidenceStatus();
-          submitButton.disabled = false;
-        } catch (error) {
-          statusMessage.className = "status error";
-          statusMessage.textContent = error.message || "Verzending mislukt. Controleer internet en probeer opnieuw.";
-          submitButton.disabled = false;
-          return;
-        }
+      setDefaultReturnDate();
+      showLanding();
+      window.addEventListener("resize", () => {
+        loanFlow.signature.resize();
+        returnFlow.signature.resize();
       });
+      goLoanBtn.addEventListener("click", showLoanForm);
+      goReturnBtn.addEventListener("click", showReturnForm);
+      backFromLoanBtn.addEventListener("click", showLanding);
+      backFromReturnBtn.addEventListener("click", showLanding);
     </script>
   </body>
 </html>
