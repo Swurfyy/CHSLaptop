@@ -607,6 +607,18 @@
               <input id="laptopNumber" name="laptop_number" type="text" required />
             </div>
             <div>
+              <label for="loanReason">Reden uitlenen</label>
+              <input id="loanReason" name="loan_reason" type="text" required />
+            </div>
+            <div>
+              <label for="chargerGiven">Lader meegegeven (Ja / Nee)</label>
+              <select id="chargerGiven" name="charger_given" required>
+                <option value="" selected disabled>Kies Ja of Nee</option>
+                <option value="Ja">Ja</option>
+                <option value="Nee">Nee</option>
+              </select>
+            </div>
+            <div>
               <label for="laptopOk">Laptop is in orde (Ja / Nee)</label>
               <select id="laptopOk" name="laptop_ok" required>
                 <option value="" selected disabled>Kies Ja of Nee</option>
@@ -684,6 +696,14 @@
             <div>
               <label for="returnLaptopOk">Laptop nog in orde (Ja / Nee)</label>
               <select id="returnLaptopOk" name="laptop_ok" required>
+                <option value="" selected disabled>Kies Ja of Nee</option>
+                <option value="Ja">Ja</option>
+                <option value="Nee">Nee</option>
+              </select>
+            </div>
+            <div>
+              <label for="chargerReturned">Lader teruggegeven (Ja / Nee)</label>
+              <select id="chargerReturned" name="charger_returned" required>
                 <option value="" selected disabled>Kies Ja of Nee</option>
                 <option value="Ja">Ja</option>
                 <option value="Nee">Nee</option>

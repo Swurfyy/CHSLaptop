@@ -92,6 +92,8 @@ def init_db() -> None:
                 created_at TEXT NOT NULL,
                 student_name TEXT NOT NULL,
                 laptop_number TEXT NOT NULL,
+                loan_reason TEXT NOT NULL DEFAULT '',
+                charger_given TEXT NOT NULL DEFAULT '',
                 laptop_ok TEXT NOT NULL,
                 damage_evidence_status TEXT NOT NULL,
                 signature_status TEXT NOT NULL,
@@ -108,6 +110,7 @@ def init_db() -> None:
                 student_name TEXT NOT NULL,
                 laptop_number TEXT NOT NULL,
                 returned_at TEXT NOT NULL,
+                charger_returned TEXT NOT NULL DEFAULT '',
                 laptop_ok TEXT NOT NULL,
                 damage_evidence_status TEXT NOT NULL,
                 remarks TEXT NOT NULL,
@@ -117,7 +120,16 @@ def init_db() -> None:
             )
             """
         )
+        ensure_column(conn, "loan_submissions", "loan_reason", "TEXT NOT NULL DEFAULT ''")
+        ensure_column(conn, "loan_submissions", "charger_given", "TEXT NOT NULL DEFAULT ''")
+        ensure_column(conn, "return_submissions", "charger_returned", "TEXT NOT NULL DEFAULT ''")
         conn.commit()
+
+
+def ensure_column(conn: sqlite3.Connection, table_name: str, column_name: str, definition: str) -> None:
+    columns = {row["name"] for row in conn.execute(f"PRAGMA table_info({table_name})").fetchall()}
+    if column_name not in columns:
+        conn.execute(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {definition}")
 
 
 def sanitize(value: str) -> str:
@@ -180,6 +192,13 @@ def ensure_yes_no(value: str) -> None:
         raise HTTPException(status_code=400, detail="Laptop-status ongeldig.")
 
 
+def ensure_required_text(value: str, field_label: str) -> str:
+    normalized = value.strip()
+    if not normalized:
+        raise HTTPException(status_code=400, detail=f"{field_label} is verplicht.")
+    return normalized
+
+
 def normalize_damage_status(path: str | None, status: str) -> str:
     return status if path else "Geen bestand toegevoegd"
 
@@ -203,6 +222,8 @@ def health() -> HealthResponse:
 async def submit_loan(
     student_name: str = Form(...),
     laptop_number: str = Form(...),
+    loan_reason: str = Form(...),
+    charger_given: str = Form(...),
     laptop_ok: str = Form(...),
     damage_evidence_status: str = Form("Geen bestand toegevoegd"),
     signature_status: str = Form("Bijlage toegevoegd (PNG)"),
@@ -210,6 +231,8 @@ async def submit_loan(
     signature_file: UploadFile = File(...),
 ) -> JSONResponse:
     ensure_yes_no(laptop_ok)
+    ensure_yes_no(charger_given)
+    loan_reason = ensure_required_text(loan_reason, "Reden uitlenen")
     if laptop_ok == "Nee" and damage_evidence is None:
         raise HTTPException(status_code=400, detail="Bewijsfoto is verplicht bij 'Nee'.")
 
@@ -224,14 +247,16 @@ async def submit_loan(
         conn.execute(
             """
             INSERT INTO loan_submissions (
-                created_at, student_name, laptop_number, laptop_ok,
+                created_at, student_name, laptop_number, loan_reason, charger_given, laptop_ok,
                 damage_evidence_status, signature_status, damage_file_path, signature_file_path
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 created_at,
                 student_name,
                 laptop_number,
+                loan_reason,
+                charger_given,
                 laptop_ok,
                 normalized_damage_status,
                 signature_status,
@@ -249,6 +274,8 @@ async def submit_loan(
                 "",
                 f"Student: {student_name}",
                 f"Laptop-NR: {laptop_number}",
+                f"Reden uitlenen: {loan_reason}",
+                f"Lader meegegeven: {charger_given}",
                 f"Laptop in orde: {laptop_ok}",
                 f"Schade bewijsfoto: {normalized_damage_status}",
                 f"Handtekening: {signature_status}",
@@ -270,6 +297,7 @@ async def submit_return(
     student_name: str = Form(...),
     laptop_number: str = Form(...),
     returned_at: str = Form(...),
+    charger_returned: str = Form(...),
     laptop_ok: str = Form(...),
     damage_evidence_status: str = Form("Geen bestand toegevoegd"),
     remarks: str = Form(""),
@@ -278,6 +306,7 @@ async def submit_return(
     signature_file: UploadFile = File(...),
 ) -> JSONResponse:
     ensure_yes_no(laptop_ok)
+    ensure_yes_no(charger_returned)
     if laptop_ok == "Nee" and damage_evidence is None:
         raise HTTPException(status_code=400, detail="Bewijsfoto is verplicht bij 'Nee'.")
 
@@ -292,15 +321,16 @@ async def submit_return(
         conn.execute(
             """
             INSERT INTO return_submissions (
-                created_at, student_name, laptop_number, returned_at, laptop_ok,
+                created_at, student_name, laptop_number, returned_at, charger_returned, laptop_ok,
                 damage_evidence_status, remarks, signature_status, damage_file_path, signature_file_path
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 created_at,
                 student_name,
                 laptop_number,
                 returned_at,
+                charger_returned,
                 laptop_ok,
                 normalized_damage_status,
                 remarks.strip(),
@@ -320,6 +350,7 @@ async def submit_return(
                 f"Student: {student_name}",
                 f"Laptop-NR: {laptop_number}",
                 f"Ingeleverd op: {returned_at}",
+                f"Lader teruggegeven: {charger_returned}",
                 f"Laptop nog in orde: {laptop_ok}",
                 f"Schade bewijsfoto: {normalized_damage_status}",
                 f"Opmerkingen: {remarks.strip() or '-'}",
