@@ -328,6 +328,73 @@
         color: #607162;
       }
 
+      .photo-input {
+        display: none;
+      }
+
+      .photo-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .photo-btn {
+        border: 1px solid #bed4bf;
+        background: #ffffff;
+        color: #1f4d25;
+        border-radius: 8px;
+        padding: 9px 12px;
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .photo-preview {
+        margin-top: 10px;
+        width: 100%;
+        max-height: 200px;
+        object-fit: contain;
+        border: 1px solid #dce9dc;
+        border-radius: 8px;
+        background: #ffffff;
+      }
+
+      .camera-modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.65);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+        z-index: 20;
+      }
+
+      .camera-modal.hidden {
+        display: none !important;
+      }
+
+      .camera-card {
+        width: min(760px, 100%);
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 14px;
+      }
+
+      #cameraVideo {
+        width: 100%;
+        max-height: 65vh;
+        border-radius: 10px;
+        background: #000000;
+      }
+
+      .camera-actions {
+        margin-top: 10px;
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+      }
+
       .footer {
         margin-top: 30px;
         border-top: 1px solid #dbe9dc;
@@ -549,7 +616,19 @@
             </div>
             <div>
               <label for="damageEvidence">Bewijsfoto eventuele schade</label>
-              <input id="damageEvidence" name="damage_evidence" type="file" accept="image/*" capture="environment" />
+              <input
+                id="damageEvidence"
+                class="photo-input"
+                name="damage_evidence"
+                type="file"
+                accept="image/*"
+                capture="environment"
+              />
+              <div class="photo-actions">
+                <button id="openCameraLoanBtn" class="photo-btn" type="button">Foto nemen</button>
+                <button id="chooseFileLoanBtn" class="photo-btn" type="button">Bestand kiezen</button>
+              </div>
+              <img id="damagePreviewLoan" class="photo-preview hidden" alt="Voorbeeld schadefoto uitleen" />
               <input type="hidden" id="damageEvidenceStatus" name="damage_evidence_status" value="Geen bestand toegevoegd" />
               <p class="signature-hint" id="damageEvidenceHint">
                 Voeg een foto toe als er schade is. Verplicht wanneer "Laptop is in orde" op Nee staat.
@@ -612,7 +691,19 @@
             </div>
             <div>
               <label for="returnDamageEvidence">Bewijsfoto eventuele schade</label>
-              <input id="returnDamageEvidence" name="damage_evidence" type="file" accept="image/*" capture="environment" />
+              <input
+                id="returnDamageEvidence"
+                class="photo-input"
+                name="damage_evidence"
+                type="file"
+                accept="image/*"
+                capture="environment"
+              />
+              <div class="photo-actions">
+                <button id="openCameraReturnBtn" class="photo-btn" type="button">Foto nemen</button>
+                <button id="chooseFileReturnBtn" class="photo-btn" type="button">Bestand kiezen</button>
+              </div>
+              <img id="damagePreviewReturn" class="photo-preview hidden" alt="Voorbeeld schadefoto inleveren" />
               <input type="hidden" id="returnDamageEvidenceStatus" name="damage_evidence_status" value="Geen bestand toegevoegd" />
               <p class="signature-hint" id="returnDamageEvidenceHint">
                 Voeg een foto toe als er schade is. Verplicht wanneer "Laptop nog in orde" op Nee staat.
@@ -685,6 +776,17 @@
       </div>
     </footer>
 
+    <div id="cameraModal" class="camera-modal hidden" role="dialog" aria-modal="true" aria-label="Camera">
+      <div class="camera-card">
+        <video id="cameraVideo" autoplay playsinline></video>
+        <canvas id="cameraCanvas" class="hidden"></canvas>
+        <div class="camera-actions">
+          <button id="cameraCancelBtn" class="photo-btn" type="button">Annuleren</button>
+          <button id="cameraCaptureBtn" class="submit-btn" type="button">Foto gebruiken</button>
+        </div>
+      </div>
+    </div>
+
     <script>
       const brandLogo = document.getElementById("brandLogo");
       const siteFavicon = document.getElementById("siteFavicon");
@@ -695,9 +797,16 @@
       const goReturnBtn = document.getElementById("goReturnBtn");
       const backFromLoanBtn = document.getElementById("backFromLoanBtn");
       const backFromReturnBtn = document.getElementById("backFromReturnBtn");
+      const cameraModal = document.getElementById("cameraModal");
+      const cameraVideo = document.getElementById("cameraVideo");
+      const cameraCanvas = document.getElementById("cameraCanvas");
+      const cameraCancelBtn = document.getElementById("cameraCancelBtn");
+      const cameraCaptureBtn = document.getElementById("cameraCaptureBtn");
       const localLogoPath = "/static/chslogo.png";
       const fallbackLogoPath =
         "https://campushetspoor.be/wp-content/uploads/2024/04/campus_het_spoor_logo-removebg-preview.png";
+      let cameraStream = null;
+      let currentCameraTarget = null;
 
       function applyBrandAssets(path) {
         brandLogo.src = path;
@@ -741,6 +850,76 @@
           bytes[i] = binary.charCodeAt(i);
         }
         return new Blob([bytes], { type: mime });
+      }
+
+      function setFileOnInput(inputEl, file) {
+        try {
+          const dt = new DataTransfer();
+          dt.items.add(file);
+          inputEl.files = dt.files;
+          inputEl._capturedFile = null;
+        } catch (error) {
+          inputEl._capturedFile = file;
+        }
+      }
+
+      function getEffectiveFile(inputEl) {
+        if (inputEl.files && inputEl.files.length > 0) return inputEl.files[0];
+        if (inputEl._capturedFile) return inputEl._capturedFile;
+        return null;
+      }
+
+      function stopCameraStream() {
+        if (cameraStream) {
+          cameraStream.getTracks().forEach((track) => track.stop());
+          cameraStream = null;
+        }
+      }
+
+      async function openCamera(target) {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          target.inputEl.click();
+          return;
+        }
+        try {
+          cameraStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { ideal: "environment" } },
+            audio: false,
+          });
+          currentCameraTarget = target;
+          cameraVideo.srcObject = cameraStream;
+          cameraModal.classList.remove("hidden");
+        } catch (error) {
+          target.inputEl.click();
+        }
+      }
+
+      function closeCamera() {
+        cameraModal.classList.add("hidden");
+        cameraVideo.srcObject = null;
+        currentCameraTarget = null;
+        stopCameraStream();
+      }
+
+      function captureCameraPhoto() {
+        if (!currentCameraTarget) return;
+        const videoWidth = cameraVideo.videoWidth || 1280;
+        const videoHeight = cameraVideo.videoHeight || 720;
+        cameraCanvas.width = videoWidth;
+        cameraCanvas.height = videoHeight;
+        const ctx = cameraCanvas.getContext("2d");
+        ctx.drawImage(cameraVideo, 0, 0, videoWidth, videoHeight);
+        cameraCanvas.toBlob(
+          (blob) => {
+            if (!blob || !currentCameraTarget) return;
+            const file = new File([blob], `schadefoto-${Date.now()}.jpg`, { type: "image/jpeg" });
+            setFileOnInput(currentCameraTarget.inputEl, file);
+            currentCameraTarget.updateUi();
+            closeCamera();
+          },
+          "image/jpeg",
+          0.9
+        );
       }
 
       function createSignaturePad(canvas, clearButton, hiddenStatusField) {
@@ -839,7 +1018,16 @@
         };
       }
 
-      function setupDamageField(selectEl, inputEl, statusEl, hintEl, mandatoryLabel) {
+      function setupDamageField(
+        selectEl,
+        inputEl,
+        statusEl,
+        hintEl,
+        mandatoryLabel,
+        openCameraBtn,
+        chooseFileBtn,
+        previewEl
+      ) {
         function updateRequirement() {
           const required = selectEl.value === "Nee";
           inputEl.required = required;
@@ -849,12 +1037,30 @@
         }
 
         function updateStatus() {
-          const attached = inputEl.files && inputEl.files.length > 0;
+          const currentFile = getEffectiveFile(inputEl);
+          const attached = Boolean(currentFile);
           statusEl.value = attached ? "Bestand toegevoegd" : "Geen bestand toegevoegd";
+          if (attached) {
+            previewEl.src = URL.createObjectURL(currentFile);
+            previewEl.classList.remove("hidden");
+          } else {
+            previewEl.src = "";
+            previewEl.classList.add("hidden");
+          }
         }
 
+        openCameraBtn.addEventListener("click", () =>
+          openCamera({
+            inputEl,
+            updateUi: updateStatus,
+          })
+        );
+        chooseFileBtn.addEventListener("click", () => inputEl.click());
         selectEl.addEventListener("change", updateRequirement);
-        inputEl.addEventListener("change", updateStatus);
+        inputEl.addEventListener("change", () => {
+          inputEl._capturedFile = null;
+          updateStatus();
+        });
         updateRequirement();
         updateStatus();
 
@@ -873,7 +1079,10 @@
           config.damageInput,
           config.damageStatusField,
           config.damageHint,
-          config.okLabel
+          config.okLabel,
+          config.openCameraBtn,
+          config.chooseFileBtn,
+          config.damagePreview
         );
 
         config.form.addEventListener("submit", async (event) => {
@@ -903,6 +1112,10 @@
             formData.set("student_name", studentName);
             formData.set("signature_status", "Bijlage toegevoegd (PNG)");
             formData.append("signature_file", signatureBlob, signatureFilename);
+            if (!formData.get("damage_evidence")) {
+              const damageFile = getEffectiveFile(config.damageInput);
+              if (damageFile) formData.set("damage_evidence", damageFile, damageFile.name);
+            }
 
             const response = await fetch(config.form.action, {
               method: "POST",
@@ -945,6 +1158,9 @@
         damageInput: document.getElementById("damageEvidence"),
         damageStatusField: document.getElementById("damageEvidenceStatus"),
         damageHint: document.getElementById("damageEvidenceHint"),
+        openCameraBtn: document.getElementById("openCameraLoanBtn"),
+        chooseFileBtn: document.getElementById("chooseFileLoanBtn"),
+        damagePreview: document.getElementById("damagePreviewLoan"),
         signatureCanvas: document.getElementById("signatureCanvasLoan"),
         clearSignatureBtn: document.getElementById("clearSignatureBtnLoan"),
         signatureStatusField: document.getElementById("signatureDataLoan"),
@@ -960,6 +1176,9 @@
         damageInput: document.getElementById("returnDamageEvidence"),
         damageStatusField: document.getElementById("returnDamageEvidenceStatus"),
         damageHint: document.getElementById("returnDamageEvidenceHint"),
+        openCameraBtn: document.getElementById("openCameraReturnBtn"),
+        chooseFileBtn: document.getElementById("chooseFileReturnBtn"),
+        damagePreview: document.getElementById("damagePreviewReturn"),
         signatureCanvas: document.getElementById("signatureCanvasReturn"),
         clearSignatureBtn: document.getElementById("clearSignatureBtnReturn"),
         signatureStatusField: document.getElementById("signatureDataReturn"),
@@ -980,6 +1199,8 @@
       goReturnBtn.addEventListener("click", showReturnForm);
       backFromLoanBtn.addEventListener("click", showLanding);
       backFromReturnBtn.addEventListener("click", showLanding);
+      cameraCancelBtn.addEventListener("click", closeCamera);
+      cameraCaptureBtn.addEventListener("click", captureCameraPhoto);
     </script>
   </body>
 </html>
