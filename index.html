@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Campus Het Spoor - Uitleenservice</title>
-    <link id="siteFavicon" rel="icon" type="image/png" href="/static/chslogo.png" />
+    <link id="siteFavicon" rel="icon" type="image/png" href="static/chslogo.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -551,7 +551,7 @@
     <header class="site-header">
       <div class="header-inner">
         <div class="brand">
-          <img class="brand-mark" id="brandLogo" src="/static/chslogo.png" alt="Campus Het Spoor logo" />
+          <img class="brand-mark" id="brandLogo" src="static/chslogo.png" alt="Campus Het Spoor logo" />
           <div>
             <p class="brand-text">Campus Het Spoor</p>
             <p class="brand-subtext">Uitleenservice Leenlaptops</p>
@@ -597,7 +597,7 @@
             </p>
           </header>
 
-          <form id="loanForm" method="POST" action="/submit" enctype="multipart/form-data" novalidate>
+          <form id="loanForm" method="POST" action="submit" enctype="multipart/form-data" novalidate>
             <div>
               <label for="studentName">Naam van student</label>
               <input id="studentName" name="student_name" type="text" required />
@@ -680,7 +680,7 @@
             <p class="intro">Registreer hieronder de ingeleverde laptop en noteer eventuele opmerkingen.</p>
           </header>
 
-          <form id="returnForm" method="POST" action="/submit-return" enctype="multipart/form-data" novalidate>
+          <form id="returnForm" method="POST" action="submit-return" enctype="multipart/form-data" novalidate>
             <div>
               <label for="returnStudentName">Naam van student</label>
               <input id="returnStudentName" name="student_name" type="text" required />
@@ -808,6 +808,16 @@
     </div>
 
     <script>
+      (function fixSubpathActions() {
+        const loan = document.getElementById("loanForm");
+        const ret = document.getElementById("returnForm");
+        if (!loan || !ret) return;
+        let dir = window.location.pathname;
+        if (!dir.endsWith("/")) dir += "/";
+        loan.setAttribute("action", dir + "submit");
+        ret.setAttribute("action", dir + "submit-return");
+      })();
+
       const brandLogo = document.getElementById("brandLogo");
       const siteFavicon = document.getElementById("siteFavicon");
       const landingView = document.getElementById("landingView");
@@ -822,7 +832,7 @@
       const cameraCanvas = document.getElementById("cameraCanvas");
       const cameraCancelBtn = document.getElementById("cameraCancelBtn");
       const cameraCaptureBtn = document.getElementById("cameraCaptureBtn");
-      const localLogoPath = "/static/chslogo.png";
+      const localLogoPath = "static/chslogo.png";
       const fallbackLogoPath =
         "https://campushetspoor.be/wp-content/uploads/2024/04/campus_het_spoor_logo-removebg-preview.png";
       let cameraStream = null;
